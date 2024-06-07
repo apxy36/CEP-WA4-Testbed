@@ -21,6 +21,6 @@ class CameraManager {
             (this.target.y - this.true_scroll.y) / this.DRIFT_FACTOR;
         this.camera.x = this.true_scroll.x;
         this.camera.y = this.true_scroll.y;
-        console.log(this.camera.x, this.camera.y);
+        // console.log(this.camera.x, this.camera.y);
     }
 }

@@ -40,6 +40,7 @@ function setup() {
   cam = new CameraManager(windowWidth / 2, windowHeight / 2);
   graphics = createGraphics(windowWidth, windowHeight);
   map.buildMap(map);
+  map.buildIso();
 }
 
 function draw_tile(img, x, y, graphics) {
@@ -97,13 +98,13 @@ function reSize(){
 
 function moveCamera(){
   if (kb.pressing("w")){
-    console.log("w")
-    cam.setCoordTarget(cam.target.x, cam.target.y - 1 * map.gridscale);
+    // console.log("w")
+    cam.setCoordTarget(cam.target.x, cam.target.y - 3 * map.gridscale);
   } else if (kb.pressing("s")){
-    cam.setCoordTarget(cam.target.x, cam.target.y + 1* map.gridscale);
+    cam.setCoordTarget(cam.target.x, cam.target.y + 3* map.gridscale);
   } else if (kb.pressing("a")){
-    cam.setCoordTarget(cam.target.x - 1* map.gridscale, cam.target.y);
+    cam.setCoordTarget(cam.target.x - 3* map.gridscale, cam.target.y);
   } else if (kb.pressing("d")){
-    cam.setCoordTarget(cam.target.x + 1* map.gridscale, cam.target.y);
+    cam.setCoordTarget(cam.target.x + 3* map.gridscale, cam.target.y);
   }
 }

@@ -58,6 +58,7 @@ class Grid{
     this.gridscale = 1.0;
     this.TILE_WIDTH = cellSize;
     this.TILE_HEIGHT = 16;
+    this.graphics = this.draw_grid(windowWidth/2, windowHeight/2, this.graphics);
   }
 
   get_tile(x, y){
@@ -302,10 +303,11 @@ class Grid{
     graphics.image(img, X_screen, Y_screen);
   }
   draw_grid(camx, camy, graphic = this.graphics) {
+    let graphics = createGraphics(windowWidth, windowHeight);
     let offsetx = camx - windowWidth / 2;
     let offsety = camy - windowHeight / 2; //scaling needs to be dealt with
-    let X_start = width/2 - this.TILE_WIDTH/2 + offsetx;
-    let Y_start = height/2 - this.GRID_SIZE * this.TILE_HEIGHT/2 + offsety;
+    let X_start = width/2 - this.TILE_WIDTH/2 //+ offsetx;
+    let Y_start = height/2 - this.GRID_SIZE * this.TILE_HEIGHT/2 //+ offsety;
     //i is x
     for (let i = 0; i < this.GRID_SIZE; i++) {
       let y = 0;
@@ -328,7 +330,7 @@ class Grid{
           image = this.tile_images[69]; 
         }
         // console.log(this.grid.get(i + "_" + y).z)
-        this.draw_tile(image, i, y, this.grid.get(i + "_" + y).z, graphic, X_start, Y_start);
+        this.draw_tile(image, i, y, this.grid.get(i + "_" + y).z, graphics, X_start, Y_start);
         y++;
       }
       while (i >= x) {
@@ -344,21 +346,34 @@ class Grid{
         } else if (this.gridarray[i][x] == "-") {
           image = this.tile_images[69]; 
         }
-        this.draw_tile(image, x, i, this.grid.get(x + "_" + i).z, graphic, X_start, Y_start);
+        this.draw_tile(image, x, i, this.grid.get(x + "_" + i).z, graphics, X_start, Y_start);
         x++;
       }
+
       // for (let j = 0; j < GRID_SIZE; j++) {
       //   draw_tile(tile_images[grid[j][i]], i, j); //sequential, use while loop now (while x > y, draw_tile, y++ )
       // }
     }
+    return graphics;
   }
   displayIso(camx, camy){
-    this.draw_grid(camx, camy, this.graphics);
+    // let newgraphics = createGraphics(windowWidth, windowHeight);
+    // this.draw_grid(camx, camy, newgraphics);
+    // this.graphics = newgraphics;
+    // console.log(this.graphics)
+    let offsetx = camx - windowWidth / 2;
+    let offsety = camy - windowHeight / 2; //scaling needs to be dealt with
+    // console.log(offsetx, offsety)
+    this.graphics = this.draw_grid(camx, camy, this.graphics);
     //how to delete prev image? 
-    image(this.graphics,  -windowWidth / 2* (this.gridscale - 1),  - windowHeight / 2 * (this.gridscale - 1), windowWidth * this.gridscale, windowHeight * this.gridscale);
+    image(this.graphics,  -windowWidth / 2* (this.gridscale - 1) + offsetx,  - windowHeight / 2 * (this.gridscale - 1) + offsety, windowWidth * this.gridscale, windowHeight * this.gridscale);
     // let newGraphics = createGraphics(windowWidth * this.gridscale, windowHeight * this.gridscale);
     // newGraphics.image(this.graphics,  -windowWidth / 2* (this.gridscale - 1), -windowHeight / 2 * (this.gridscale - 1), windowWidth * this.gridscale, windowHeight * this.gridscale);
     // image(this.graphics,  -windowWidth / 2* (this.gridscale - 1),  - windowHeight / 2 * (this.gridscale - 1), windowWidth * this.gridscale, windowHeight * this.gridscale);
+  }
+  buildIso(camx, camy){
+    this.graphics = this.draw_grid(camx, camy);
+    // console.log(this.graphics)
   }
 
 
