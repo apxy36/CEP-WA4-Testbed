@@ -76,35 +76,36 @@ function draw_grid(graphic) {
 
 function draw() {
   background("black");
+  frameRate(60);
   // draw_grid(graphics);
   // let newGraphics = createGraphics(windowWidth * GRID_SCALE, windowHeight * GRID_SCALE);
   // newGraphics.image(graphics,  -windowWidth / 2* (GRID_SCALE - 1), -windowHeight / 2 * (GRID_SCALE - 1), windowWidth * GRID_SCALE, windowHeight * GRID_SCALE);
   // image(graphics,  -windowWidth / 2* (GRID_SCALE - 1),  - windowHeight / 2 * (GRID_SCALE - 1), windowWidth * GRID_SCALE, windowHeight * GRID_SCALE);
   // image(graphics, 0,0)
   // graphics = newGraphics;
-  cam.update()
-  map.displayIso(cam.camera.x, cam.camera.y);
+  cam.update();
+  map.displayIso(cam.camera.x, cam.camera.y, cam.true_scale);
   reSize();
   moveCamera();
 }
 
 function reSize(){
   if (kb.pressing("ArrowUp")){
-    map.gridscale += 0.01;
+    cam.setScaling(cam.targetscaling + 0.01);
   } else if (kb.pressing("ArrowDown")){
-    map.gridscale -= 0.01;
+    cam.setScaling(cam.targetscaling - 0.01);
   }
 }
 
 function moveCamera(){
   if (kb.pressing("w")){
     // console.log("w")
-    cam.setCoordTarget(cam.target.x, cam.target.y - 3 * map.gridscale);
+    cam.setCoordTarget(cam.target.x, cam.target.y - 6 * map.gridscale);
   } else if (kb.pressing("s")){
-    cam.setCoordTarget(cam.target.x, cam.target.y + 3* map.gridscale);
+    cam.setCoordTarget(cam.target.x, cam.target.y + 6 * map.gridscale);
   } else if (kb.pressing("a")){
-    cam.setCoordTarget(cam.target.x - 3* map.gridscale, cam.target.y);
+    cam.setCoordTarget(cam.target.x - 6 * map.gridscale, cam.target.y);
   } else if (kb.pressing("d")){
-    cam.setCoordTarget(cam.target.x + 3* map.gridscale, cam.target.y);
+    cam.setCoordTarget(cam.target.x + 6 * map.gridscale, cam.target.y);
   }
 }

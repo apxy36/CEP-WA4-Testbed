@@ -361,7 +361,8 @@ class Grid{
     }
     return graphics;
   }
-  displayIso(camx, camy){
+  displayIso(camx, camy, camscale){
+    this.gridscale = camscale;
     // let newgraphics = createGraphics(windowWidth, windowHeight);
     // this.draw_grid(camx, camy, newgraphics);
     // this.graphics = newgraphics;
