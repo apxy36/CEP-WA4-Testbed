@@ -90,9 +90,9 @@ function draw() {
 
 function reSize(){
   if (kb.pressing("ArrowUp")){
-    GRID_SCALE += 0.01;
+    map.gridscale += 0.01;
   } else if (kb.pressing("ArrowDown")){
-    GRID_SCALE -= 0.01;
+    map.gridscale -= 0.01;
   }
 }
 

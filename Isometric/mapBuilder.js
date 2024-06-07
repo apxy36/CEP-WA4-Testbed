@@ -58,7 +58,12 @@ class Grid{
     this.gridscale = 1.0;
     this.TILE_WIDTH = cellSize;
     this.TILE_HEIGHT = 16;
+    this.truewidth = this.width * this.TILE_WIDTH;
+    this.trueheight = this.height * this.TILE_HEIGHT;
+    console.log(this.truewidth, this.trueheight)
     this.graphics = this.draw_grid(windowWidth/2, windowHeight/2, this.graphics);
+
+    
   }
 
   get_tile(x, y){
@@ -303,11 +308,11 @@ class Grid{
     graphics.image(img, X_screen, Y_screen);
   }
   draw_grid(camx, camy, graphic = this.graphics) {
-    let graphics = createGraphics(windowWidth, windowHeight);
-    let offsetx = camx - windowWidth / 2;
-    let offsety = camy - windowHeight / 2; //scaling needs to be dealt with
-    let X_start = width/2 - this.TILE_WIDTH/2 //+ offsetx;
-    let Y_start = height/2 - this.GRID_SIZE * this.TILE_HEIGHT/2 //+ offsety;
+    let graphics = createGraphics(this.truewidth, this.trueheight);
+    let offsetx = camx - this.truewidth / 2;
+    let offsety = camy - this.trueheight / 2; //scaling needs to be dealt with
+    let X_start = this.truewidth/2 - this.TILE_WIDTH/2 //+ offsetx;
+    let Y_start = this.trueheight/2 - this.GRID_SIZE * this.TILE_HEIGHT/2 //+ offsety;
     //i is x
     for (let i = 0; i < this.GRID_SIZE; i++) {
       let y = 0;
@@ -361,12 +366,12 @@ class Grid{
     // this.draw_grid(camx, camy, newgraphics);
     // this.graphics = newgraphics;
     // console.log(this.graphics)
-    let offsetx = camx - windowWidth / 2;
-    let offsety = camy - windowHeight / 2; //scaling needs to be dealt with
+    let offsetx = (camx - windowWidth / 2) * this.gridscale; //scaling needs to be dealt with
+    let offsety = (camy - windowHeight / 2) * this.gridscale; //scaling needs to be dealt with
     // console.log(offsetx, offsety)
     this.graphics = this.draw_grid(camx, camy, this.graphics);
     //how to delete prev image? 
-    image(this.graphics,  -windowWidth / 2* (this.gridscale - 1) + offsetx,  - windowHeight / 2 * (this.gridscale - 1) + offsety, windowWidth * this.gridscale, windowHeight * this.gridscale);
+    image(this.graphics,  - 1 / 2* (this.gridscale * this.truewidth - windowWidth) + offsetx,  - 1 / 2 * (this.gridscale * this.trueheight - windowHeight) + offsety, this.truewidth * this.gridscale, this.trueheight * this.gridscale);
     // let newGraphics = createGraphics(windowWidth * this.gridscale, windowHeight * this.gridscale);
     // newGraphics.image(this.graphics,  -windowWidth / 2* (this.gridscale - 1), -windowHeight / 2 * (this.gridscale - 1), windowWidth * this.gridscale, windowHeight * this.gridscale);
     // image(this.graphics,  -windowWidth / 2* (this.gridscale - 1),  - windowHeight / 2 * (this.gridscale - 1), windowWidth * this.gridscale, windowHeight * this.gridscale);
