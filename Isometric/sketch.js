@@ -6,6 +6,7 @@ const TILE_HEIGHT = 16;
 let GRID_SCALE = 1.0;
 
 let mechplayer;
+let playerZ = 0;
 
 //next, to change the "x" into numbers, and then to change the numbers into images
 //then to change the images into the isometric view
@@ -86,14 +87,25 @@ function draw_grid(graphic) {
 function manageVisiblePlayer(mechanicSprite, playerSprite, map){
   // console.log(mechanicSprite.pos.x, mechanicSprite.pos.y, playerSprite.pos.x, playerSprite.pos.y, map)
   // project the sprite onto isometric grid from x and y
-  let X_screen = map.xstart + (mechanicSprite.pos.x - mechanicSprite.pos.y) * 1/2;
-  let Y_screen = map.ystart + (mechanicSprite.pos.x + mechanicSprite.pos.y) * (map.TILE_HEIGHT/4) / map.TILE_HEIGHT - 0 * map.TILE_HEIGHT/2; // z is 0 for now
-  console.log(X_screen, Y_screen, mechanicSprite.pos.x, mechanicSprite.pos.y)
-  playerSprite.pos.x = X_screen;
-  playerSprite.pos.y = Y_screen;
+  // let X_screen = map.xstart + (mechanicSprite.pos.x - mechanicSprite.pos.y) * 1/2;
+  // let Y_screen = map.ystart + (mechanicSprite.pos.x + mechanicSprite.pos.y) * (map.TILE_HEIGHT/4) / map.TILE_HEIGHT - 0 * map.TILE_HEIGHT/2; // z is 0 for now
+  // console.log(X_screen, Y_screen, mechanicSprite.pos.x, mechanicSprite.pos.y)
+  // playerSprite.pos.x = X_screen;
+  // playerSprite.pos.y = Y_screen;
+  let tilecoords = map.findFromCoords(mechanicSprite.pos.x, mechanicSprite.pos.y)
+  tilecoords.x = min(max(0, tilecoords.x), map.numCols - 1)
+  tilecoords.y = min(max(0, tilecoords.y), map.numRows - 1)
+  let tile = map.getTile(tilecoords.x, tilecoords.y)
+  // if tile.z is integer
+  if (abs(tile.z - playerZ) <= 1){
+    playerZ = tile.z;
+    displayPlayer.layer = (tile.z - 0) * 1000;
+  }
+  // console.log(tile.z, playerZ, map.getAdjacentTiles(tilecoords.x, tilecoords.y));
 
+  // console.log(mechanicSprite)
   playerSprite.pos.x = mechanicSprite.pos.x;
-  playerSprite.pos.y = mechanicSprite.pos.y;
+  playerSprite.pos.y = mechanicSprite.pos.y - playerZ * map.TILE_HEIGHT/2;
 
 }
 
@@ -114,6 +126,7 @@ function draw() {
   // graphics = newGraphics;
   cam.update();
   manageVisiblePlayer(mechplayer, displayPlayer, map)
+  map.updateCollisionLayers(playerZ);
   // map.displayIso(cam.camera.x, cam.camera.y, cam.true_scale);
   move();
 
@@ -199,6 +212,6 @@ function move() {
     // } else if (kb.pressing("b") && allowMapModification) { //barrier block
     //     wallEditorMode = "x";
     // } else if (kb.pressing("backspace") && allowMapModification) {
-    //     wallEditorMode = "-";
+    //     wallEditorMode = "4";
     // }
 }

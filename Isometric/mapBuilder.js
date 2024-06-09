@@ -34,7 +34,7 @@ class Grid{
 
     this.truewidth = this.width * this.TILE_WIDTH;
     this.trueheight = this.height * this.TILE_HEIGHT;
-    console.log(this.truewidth, this.trueheight)
+    // console.log(this.truewidth, this.trueheight)
     // this.graphics = this.draw_grid(windowWidth/2, windowHeight/2, this.graphics);
     this.xstart = this.truewidth / 2 - this.TILE_WIDTH / 2;
     this.ystart = this.trueheight / 2 - this.GRID_SIZE * this.TILE_HEIGHT / 2;
@@ -43,7 +43,7 @@ class Grid{
 
     // this.tile_images = tile_images;
     this.gridarray = this.generateMapWithCenterRoom(this.width,this.height,8,10);
-    // console.log(this.gridarray)
+    console.log(this.gridarray)
     this.generateMap();
     this.isoarray = this.generateIsometricTileArray();
     // console.log(this.gridarray)
@@ -74,27 +74,39 @@ class Grid{
     this.mapOverlayAreas;
 
     // Create sprite groups based on the different tiles available in the map
-    this.floorBricks = new Group();
-    this.wallBricks1 = new Group();
-    this.boundaryBricks = new Group();
-    this.emptyBricks = new Group();
-    this.goldBricks = new Group();
-    this.coingroup = new Group();
+    // this.floorBricks = new Group();
+    // this.wallBricks1 = new Group();
+    // this.boundaryBricks = new Group();
+    // this.emptyBricks = new Group();
+    // this.goldBricks = new Group();
+    // this.coingroup = new Group();
     this.mapOverlayAreaSprite = new Group();
   
     // this.graphics = createGraphics(windowWidth, windowHeight);
     
+    // for mechanics
+    this.displayLayer0 = new Group();
+    this.displayLayer1 = new Group();
+    this.displayLayer2 = new Group();
+    this.displayLayer3 = new Group();
+    this.displayLayer4 = new Group();
+    this.displayLayer5 = new Group();
+    this.displayBoundaryLayer = new Group();
 
-    this.displayFloorBricks = new Group();
-    this.displayWallBricks1 = new Group();
-    this.displayBoundaryBricks = new Group();
-    this.displayEmptyBricks = new Group();
-    this.displayGoldBricks = new Group();
+    // for display
+    this.displayElevatedTileLayer1 = new Group();
+    this.displayElevatedTileLayer2 = new Group();
+    this.displayElevatedTileLayer3 = new Group();
+    this.displayElevatedTileLayer4 = new Group();
+    this.displayElevatedTileLayer5 = new Group();
+    this.displayElevatedBoundaryLayer = new Group();
 
     this.wallColor = '#484848';
     this.pathColor = "#484848";
     this.boundaryColor = "#484848";
     this.goldColor = "#484848";
+
+    this.convertMapToGridArray(this.grid);
     
     // three storages for tiles: the map, the mechanics, and the display
   }
@@ -107,7 +119,7 @@ class Grid{
     }
     // return this.grid.get(x + "_" + y);
   }
-  getTileFromMechanicIndex(x, y){ //based on the index x and y of the tile
+  getTileFromMechanicIndex(x, y){ //based on the index x and y of the tile. outofuse
     //gets sprite object\
     let tileIndex = x * this.numCols + y;
     return this.mapTiles[tileIndex];
@@ -116,21 +128,52 @@ class Grid{
   generateMap(){
     for (let i = 0; i < this.numCols; i++) {
       for (let j = 0; j < this.numRows; j++) {
-        this.grid.set(i + "_" + j, new Tile(i, j, round(random(0,2)), this.gridarray[j][i]));
+        if (this.gridarray[j][i] == "0"){
+          this.grid.set(i + "_" + j, new Tile(i, j, 0, "0"));
+        } else if (this.gridarray[j][i] == "1"){
+          this.grid.set(i + "_" + j, new Tile(i, j, 1, "1"));
+        } else if (this.gridarray[j][i] == "2"){
+          this.grid.set(i + "_" + j, new Tile(i, j, 2, "2"));
+        } else if (this.gridarray[j][i] == "3"){
+          this.grid.set(i + "_" + j, new Tile(i, j, 3, "3"));
+        } else if (this.gridarray[j][i] == "4"){
+          this.grid.set(i + "_" + j, new Tile(i, j, 4, "4"));
+        } else if (this.gridarray[j][i] == "5"){
+          this.grid.set(i + "_" + j, new Tile(i, j, 5, "5"));
+        } else if (this.gridarray[j][i] == "B"){
+          this.grid.set(i + "_" + j, new Tile(i, j, "B", "B"));
+        }
+
+        // this.grid.set(i + "_" + j, new Tile(i, j, round(random(0,2)), this.gridarray[j][i]));
       }
     }
     // console.log(this.grid)
   }
+
+  convertMapToGridArray(map){
+    let gridarray = [];
+    for (let i = 0; i < this.numCols; i++) {
+      // join the array to make it a string
+      let row = [];
+      for (let j = 0; j < this.numRows; j++) {
+        row.push(map.get(i + "_" + j).z);
+      }
+      row = row.join('');
+      gridarray.push(row);
+    }
+    // console.log(gridarray)
+    return gridarray;
+  }
   // temporary generation function for testing
   generateMapWithCenterRoom(mapWidth, mapHeight, treasureRoomWidth, treasureRoomHeight) {
       // Initialize the map with "*" for the outside area.
-      let map = Array.from({ length: mapHeight }, () => Array(mapWidth).fill('f'));
+      let map = Array.from({ length: mapHeight }, () => Array(mapWidth).fill('0'));
 
-      // Set the outer boundary of the map as "x".
+      // Set the outer boundary of the map as "2".
       for (let y = 0; y < mapHeight; y++) {
           for (let x = 0; x < mapWidth; x++) {
               if (x === 0 || y === 0 || x === mapWidth - 1 || y === mapHeight - 1) {
-                  map[y][x] = 'x';
+                  map[y][x] = 'B';
               }
           }
       }
@@ -157,10 +200,10 @@ class Grid{
                       map[y][x] = '1'; // Place wall
                   } else {
                       if (isTreasureRoom) {
-                          map[y][x] = 'G';
+                          map[y][x] = '2'; //change back ltr
                       }
                       else {
-                          map[y][x] = '-'; // Place path inside the room
+                          map[y][x] = '2'; // Place path inside the room
                       }
                   }
               }
@@ -258,7 +301,25 @@ class Grid{
     let coordx = (y / this.TILE_HEIGHT) - (ystart / this.TILE_HEIGHT) + (x / this.TILE_WIDTH) - (xstart / this.TILE_WIDTH);
     let coordy = coordx + (2 * xstart) / this.TILE_WIDTH -  (2 * x) / this.TILE_WIDTH;
     // console.log(coordx, coordy, x, y, xstart, ystart)
-    return createVector(coordx, coordy);
+    return createVector(round(coordx), round(coordy));
+  }
+
+  getAdjacentTiles(x, y){
+    let adjacents = [];
+    // finds adjacent tiles from map given x and y
+    if (x > 0){
+      adjacents.push(this.getTile(x - 1, y));
+    }
+    if (x < this.numCols - 1){
+      adjacents.push(this.getTile(x + 1, y));
+    }
+    if (y > 0){
+      adjacents.push(this.getTile(x, y - 1));
+    }
+    if (y < this.numRows - 1){
+      adjacents.push(this.getTile(x, y + 1));
+    }
+    return adjacents;
   }
 
 
@@ -279,7 +340,7 @@ class Grid{
 
       this.floorBricks.w = this.TILE_SIDE_LENGTH; // Width of each brick
       this.floorBricks.h = this.TILE_SIDE_LENGTH; // Height of each brick
-      this.floorBricks.tile = "f";
+      this.floorBricks.tile = "0";
       // this.floorBricks.color = this.wallColor;
       this.floorBricks.collider = 'static';
       // this.floorBricks.stroke = this.wallColor;
@@ -298,7 +359,7 @@ class Grid{
 
       this.boundaryBricks.w = this.TILE_SIDE_LENGTH;
       this.boundaryBricks.h = this.TILE_SIDE_LENGTH;
-      this.boundaryBricks.tile = "x";
+      this.boundaryBricks.tile = "2";
       // this.boundaryBricks.color = this.boundaryColor;
       this.boundaryBricks.collider = 'static';
       // this.boundaryBricks.stroke = this.boundaryColor;
@@ -307,7 +368,7 @@ class Grid{
 
       this.goldBricks.w = this.TILE_SIDE_LENGTH;
       this.goldBricks.h = this.TILE_SIDE_LENGTH;
-      this.goldBricks.tile = "G";
+      this.goldBricks.tile = "3";
       // this.goldBricks.color = this.goldColor;
       this.goldBricks.collider = 'static';
       // this.goldBricks.stroke = this.goldColor;
@@ -317,7 +378,7 @@ class Grid{
 
       this.emptyBricks.w = this.TILE_SIDE_LENGTH;
       this.emptyBricks.h = this.TILE_SIDE_LENGTH;
-      this.emptyBricks.tile = "-";
+      this.emptyBricks.tile = "4";
       // this.emptyBricks.color = "#484848";
       this.emptyBricks.collider = 'static';
       // this.emptyBricks.stroke = "#484848";
@@ -371,67 +432,115 @@ class Grid{
   }
 
   buildVisualMap() {
-    // using p5play to display the map
-    // Draw the map in isometric view
-    //remove sprites in the display group
-    // for (let i = 0; i < this.displayMapTiles.length; i++) {
-    //   this.displayMapTiles[i].remove();
-    // }
-    // this.displayMapTiles = [];
+
+    //revamping the entire map groupings: 0 -> z = 0, 1 -> z = 1, 2 -> z = 2, 3 -> z = 3, 4 -> z = 4, 5 -> z = 5
 
     if (this.displayMapTiles != null) {
       this.displayMapTiles.removeAll();
     }
 
-    this.displayFloorBricks.w = this.TILE_WIDTH; // Width of each brick
-    this.displayFloorBricks.h = this.TILE_HEIGHT; // Height of each brick
-    this.displayFloorBricks.tile = "f";
-    // this.displayFloorBricks.color = this.wallColor;
-    this.displayFloorBricks.collider = 'static';
-    // this.displayFloorBricks.stroke = this.wallColor;
-    this.displayFloorBricks.overlaps(allSprites);
-    this.displayFloorBricks.layer = -990;
-    this.displayFloorBricks.img = './new_tileset/tile_066.png';
+    this.displayLayer0.w = this.TILE_WIDTH; // Width of each brick
+    this.displayLayer0.h = this.TILE_HEIGHT; // Height of each brick
+    this.displayLayer0.tile = "0";
+    this.displayLayer0.collider = 'static';
+    this.displayLayer0.overlaps(allSprites);
+    this.displayLayer0.layer = -990;
+    this.displayLayer0.img = './new_tileset/tile_066.png';
 
-    this.displayWallBricks1.w = this.TILE_WIDTH;
-    this.displayWallBricks1.h = this.TILE_HEIGHT
-    this.displayWallBricks1.tile = "1";
-    // this.displayWallBricks1.color = this.pathColor;
-    this.displayWallBricks1.collider = 'static';
-    // this.displayWallBricks1.stroke = this.pathColor;
-    // this.displayWallBricks1.overlaps(allSprites);
-    this.displayWallBricks1.layer = 990;
-    this.displayWallBricks1.img = './new_tileset/tile_067.png';
+    this.displayLayer1.w = this.TILE_WIDTH;
+    this.displayLayer1.h = this.TILE_HEIGHT
+    this.displayLayer1.tile = "1";
+    this.displayLayer1.collider = 'static';
+    this.displayLayer1.overlaps(allSprites);
+    this.displayLayer1.layer = 0;
+    // this.displayLayer1.img = './new_tileset/tile_067.png';
+    this.displayLayer1.visible = false;
 
-    this.displayBoundaryBricks.w = this.TILE_WIDTH;
-    this.displayBoundaryBricks.h = this.TILE_HEIGHT;
-    this.displayBoundaryBricks.tile = "x";
-    // this.displayBoundaryBricks.color = this.boundaryColor;
-    this.displayBoundaryBricks.collider = 'static';
-    // this.displayBoundaryBricks.stroke = this.boundaryColor;
-    // this.displayBoundaryBricks.overlaps(allSprites);
-    this.displayBoundaryBricks.layer =-990;
-    this.displayBoundaryBricks.img = './new_tileset/tile_065.png';
+    this.displayLayer2.w = this.TILE_WIDTH;
+    this.displayLayer2.h = this.TILE_HEIGHT;
+    this.displayLayer2.tile = "2";
+    this.displayLayer2.collider = 'static';;
+    this.displayLayer2.layer = 0//990;
+    // this.displayLayer2.img = './new_tileset/tile_028.png';
+    this.displayLayer2.visible = false;
 
-    this.displayGoldBricks.w = this.TILE_WIDTH;
-    this.displayGoldBricks.h = this.TILE_HEIGHT;
-    this.displayGoldBricks.tile = "G";
-    // this.displayGoldBricks.color = this.goldColor;
-    this.displayGoldBricks.collider = 'static';
-    // this.displayGoldBricks.stroke = this.goldColor;
-    this.displayGoldBricks.overlaps(allSprites);
-    this.displayGoldBricks.layer = -999;
-    this.displayGoldBricks.img = './new_tileset/tile_068.png';
+    this.displayLayer3.w = this.TILE_WIDTH;
+    this.displayLayer3.h = this.TILE_HEIGHT;
+    this.displayLayer3.tile = "3";
+    this.displayLayer3.collider = 'static';
+    this.displayLayer3.layer = 0; //2*999;
+    // this.displayLayer3.img = './new_tileset/tile_068.png';
+    this.displayLayer3.visible = false;
 
-    this.displayEmptyBricks.w = this.TILE_WIDTH;
-    this.displayEmptyBricks.h = this.TILE_HEIGHT;
-    this.displayEmptyBricks.tile = "-";
-    // this.displayEmptyBricks.color = "#484848";
-    this.displayEmptyBricks.collider = 'static';
-    // this.displayEmptyBricks.stroke = "#484848";
-    this.displayEmptyBricks.overlaps(allSprites);
-    this.displayEmptyBricks.layer = -999;
-    this.displayEmptyBricks.img = './new_tileset/tile_069.png';
+    this.displayLayer4.w = this.TILE_WIDTH;
+    this.displayLayer4.h = this.TILE_HEIGHT;
+    this.displayLayer4.tile = "4";
+    this.displayLayer4.collider = 'static';
+    this.displayLayer4.layer = 0; //3*999;
+    // this.displayLayer4.img = './new_tileset/tile_069.png';
+    this.displayLayer4.visible = false;
+
+    this.displayLayer5.w = this.TILE_WIDTH;
+    this.displayLayer5.h = this.TILE_HEIGHT;
+    this.displayLayer5.tile = "5";
+    // this.displayLayer5.color = "#484848";
+    this.displayLayer5.collider = 'static';
+    // this.displayLayer5.stroke = "#484848";
+    // this.displayLayer5.overlaps(allSprites);
+    this.displayLayer5.layer = 0; //4*999;
+    // this.displayLayer5.img = './new_tileset/tile_070.png';
+    this.displayLayer5.visible = false;
+
+    this.displayBoundaryLayer.w = this.TILE_WIDTH;
+    this.displayBoundaryLayer.h = this.TILE_HEIGHT;
+    this.displayBoundaryLayer.tile = "B";
+    this.displayBoundaryLayer.collider = 'static';
+    this.displayBoundaryLayer.layer = -500; //5*999;
+    this.displayBoundaryLayer.img = './new_tileset/tile_071.png';
+
+    this.displayElevatedTileLayer1.w = this.TILE_WIDTH;
+    this.displayElevatedTileLayer1.h = this.TILE_HEIGHT;
+    this.displayElevatedTileLayer1.collider = 'static';
+    this.displayElevatedTileLayer1.overlaps(allSprites);
+    this.displayElevatedTileLayer1.layer = 0*999;
+    this.displayElevatedTileLayer1.img = './new_tileset/tile_027.png';
+
+    this.displayElevatedTileLayer2.w = this.TILE_WIDTH;
+    this.displayElevatedTileLayer2.h = this.TILE_HEIGHT;
+    this.displayElevatedTileLayer2.collider = 'static';
+    this.displayElevatedTileLayer2.overlaps(allSprites);
+    this.displayElevatedTileLayer2.layer = 1*999;
+    this.displayElevatedTileLayer2.img = './new_tileset/tile_027.png';
+
+    this.displayElevatedTileLayer3.w = this.TILE_WIDTH;
+    this.displayElevatedTileLayer3.h = this.TILE_HEIGHT;
+    this.displayElevatedTileLayer3.collider = 'static';
+    this.displayElevatedTileLayer3.overlaps(allSprites);
+    this.displayElevatedTileLayer3.layer = 2*999;
+    this.displayElevatedTileLayer3.img = './new_tileset/tile_027.png';
+
+    this.displayElevatedTileLayer4.w = this.TILE_WIDTH;
+    this.displayElevatedTileLayer4.h = this.TILE_HEIGHT;
+    this.displayElevatedTileLayer4.collider = 'static';
+    this.displayElevatedTileLayer4.overlaps(allSprites);
+    this.displayElevatedTileLayer4.layer = 3*999;
+    this.displayElevatedTileLayer4.img = './new_tileset/tile_027.png';
+
+    this.displayElevatedTileLayer5.w = this.TILE_WIDTH;
+    this.displayElevatedTileLayer5.h = this.TILE_HEIGHT;
+    this.displayElevatedTileLayer5.collider = 'static';
+    this.displayElevatedTileLayer5.overlaps(allSprites);
+    this.displayElevatedTileLayer5.layer = 4*999;
+    this.displayElevatedTileLayer5.img = './new_tileset/tile_027.png';
+
+    this.displayElevatedBoundaryLayer.w = this.TILE_WIDTH;
+    this.displayElevatedBoundaryLayer.h = this.TILE_HEIGHT;
+    this.displayElevatedBoundaryLayer.collider = 'static';
+    this.displayElevatedBoundaryLayer.overlaps(allSprites);
+    this.displayElevatedBoundaryLayer.layer = 5*999;
+    this.displayElevatedBoundaryLayer.img = './new_tileset/tile_027.png';
+
+
 
     this.displayMapTiles = new Tiles(this.isoarray, // 2D array of tiles
         0, // x to centralise map
@@ -440,8 +549,16 @@ class Grid{
         this.TILE_HEIGHT / 2);
     // this.mapTiles.collider = 'none';
 
-    console.log(this.displayMapTiles)
-
+    // console.log(this.displayMapTiles)
+    // for (let i = 0; i < this.displayMapTiles.length; i++) {
+    //   let tile = this.displayMapTiles[i]; //sprite object
+    //   let vect = this.findFromCoords(tile.pos.x, tile.pos.y);
+    //   let z = this.getTile(vect.x, vect.y).z;
+    //   if (z != 0){
+        
+    //     // this.displayLayer0.overlaps(allSprites);
+    //   }
+    // }
 
     for (let i = 0; i < this.displayMapTiles.length; i++) {
       let tile = this.displayMapTiles[i]; //sprite object
@@ -449,8 +566,36 @@ class Grid{
       let z = this.getTile(vect.x, vect.y).z;
       if (z != 0){
         // tile.pos.y -= z * this.TILE_HEIGHT / 2;
+        let newtile = new this.displayLayer0.Sprite();
+        newtile.pos.x = tile.pos.x;
+        newtile.pos.y = tile.pos.y;// + z * this.TILE_HEIGHT / 2; //make an entirely new tile that displays another image but has no collision, at the elevated pos. the original tile is at the original pos
+        
+        let displayTile;
+        if (z == 1){
+          displayTile = new this.displayElevatedTileLayer1.Sprite();
+        } else if (z == 2){
+          displayTile = new this.displayElevatedTileLayer2.Sprite();
+        } else if (z == 3){
+          displayTile = new this.displayElevatedTileLayer3.Sprite();
+        } else if (z == 4){
+          displayTile = new this.displayElevatedTileLayer4.Sprite();
+        } else if (z == 5){
+          displayTile = new this.displayElevatedTileLayer5.Sprite();
+        } else if (z == 'B'){
+          displayTile = new this.displayElevatedBoundaryLayer.Sprite();
+        } else {
+          displayTile = new this.displayElevatedTileLayer1.Sprite();
+        }
+        displayTile.pos.x = tile.pos.x;
+        if (z != 'B'){
+        displayTile.pos.y = tile.pos.y - z * this.TILE_HEIGHT / 2;
+        } else {
+          displayTile.pos.y = tile.pos.y - 10 * this.TILE_HEIGHT / 2;
+        }
+
       }
     }
+
 
 
     // for (let i = 0; i < this.numCols; i++) { //x 
@@ -459,18 +604,18 @@ class Grid{
     //       if (tile != null) {
     //         // console.log(43)
     //         let displayTile;
-    //         if (tile.type == "f") {
-    //           displayTile = new this.displayFloorBricks.Sprite();
+    //         if (tile.type == "0") {
+    //           displayTile = new this.displayLayer0.Sprite();
     //         } else if (tile.type == "1") {
-    //             displayTile = new this.displayWallBricks1.Sprite();
-    //         } else if (tile.type == "x") {
-    //             displayTile = new this.displayBoundaryBricks.Sprite();
-    //         } else if (tile.type == "G") {
-    //             displayTile = new this.displayGoldBricks.Sprite();
-    //         } else if (tile.type == "-") {
-    //             displayTile = new this.displayEmptyBricks.Sprite();
+    //             displayTile = new this.displayLayer1.Sprite();
+    //         } else if (tile.type == "2") {
+    //             displayTile = new this.displayLayer2.Sprite();
+    //         } else if (tile.type == "2") {
+    //             displayTile = new this.displayLayer3.Sprite();
+    //         } else if (tile.type == "4") {
+    //             displayTile = new this.displayLayer4.Sprite();
     //         } else {
-    //             displayTile = new this.displayEmptyBricks.Sprite();
+    //             displayTile = new this.displayLayer4.Sprite();
     //         }
     //         displayTile.pos.x = this.xstart + (i - j) * this.TILE_WIDTH/2;//i * this.cellSize + (j * this.cellSize / 2);
     //         displayTile.pos.y = this.ystart + (i + j) * this.TILE_HEIGHT/2 - tile.z * this.TILE_HEIGHT/2; 
@@ -483,6 +628,56 @@ class Grid{
 
     // }
     // console.log(" displayer",this.displayMapTiles)
+  }
+
+  updateCollisionLayers(playerZ){ // add layer 5 
+    if (playerZ == 0){
+      this.displayLayer0.overlaps(allSprites);
+      this.displayLayer1.overlaps(allSprites);
+      // this.displayLayer2.overlaps(allSprites);
+      // this.displayLayer3.overlaps(allSprites);
+      // this.displayLayer4.overlaps(allSprites);
+      // this.displayLayer5.overlaps(allSprites);
+    } else if (playerZ == 1){
+      this.displayLayer0.overlaps(allSprites);
+      this.displayLayer1.overlaps(allSprites);
+      this.displayLayer2.overlaps(allSprites);
+      // console.log(this.displayLayer2)
+      // this.displayLayer3.overlaps(allSprites);
+      // this.displayLayer4.overlaps(allSprites);
+      // this.displayLayer5.overlaps(allSprites);
+    } else if (playerZ == 2){
+      // this.displayLayer0.overlaps(allSprites);
+      this.displayLayer1.overlaps(allSprites);
+      this.displayLayer2.overlaps(allSprites);
+      this.displayLayer3.overlaps(allSprites);
+      // this.displayLayer4.overlaps(allSprites);
+      // this.displayLayer5.overlaps(allSprites);
+    } else if (playerZ == 3){
+      // this.displayLayer0.overlaps(allSprites);
+      // this.displayLayer1.overlaps(allSprites);
+      this.displayLayer2.overlaps(allSprites);
+      this.displayLayer3.overlaps(allSprites);
+      this.displayLayer4.overlaps(allSprites);
+      // this.displayLayer5.overlaps(allSprites);
+    } else if (playerZ == 4){
+      // this.displayLayer0.overlaps(allSprites);
+      // this.displayLayer1.overlaps(allSprites);
+      this.displayLayer2.overlaps(allSprites);
+      this.displayLayer3.overlaps(allSprites);
+      this.displayLayer4.overlaps(allSprites);
+      // this.displayLayer5.overlaps(allSprites);
+    } else if (playerZ == 5){
+      // this.displayLayer0.overlaps(allSprites);
+      // this.displayLayer1.overlaps(allSprites);
+      // this.displayLayer2.overlaps(allSprites);
+      // this.displayLayer3.overlaps(allSprites);
+      this.displayLayer4.overlaps(allSprites);
+      this.displayLayer5.overlaps(allSprites);
+    
+    }
+
+
   }
 
 
@@ -536,13 +731,13 @@ class Grid{
         let image;
         if (this.gridarray[y][i] == "_"){
           image = this.tile_images[66];
-        } else if (this.gridarray[y][i] == "x"){
+        } else if (this.gridarray[y][i] == "2"){
           image = this.tile_images[65];
         } else if (this.gridarray[y][i] == "1"){
           image = this.tile_images[67];
-        } else if (this.gridarray[y][i] == "G"){
+        } else if (this.gridarray[y][i] == "2"){
           image = this.tile_images[68];
-        } else if (this.gridarray[y][i] == "-") {
+        } else if (this.gridarray[y][i] == "4") {
           image = this.tile_images[69]; 
         }
         // console.log(this.grid.get(i + "_" + y).z)
@@ -553,13 +748,13 @@ class Grid{
         let image;
         if (this.gridarray[i][x] == "_"){
           image = this.tile_images[66];
-        } else if (this.gridarray[i][x] == "x"){
+        } else if (this.gridarray[i][x] == "2"){
           image = this.tile_images[65];
         } else if (this.gridarray[i][x] == "1"){
           image = this.tile_images[67];
-        } else if (this.gridarray[i][x] == "G"){
+        } else if (this.gridarray[i][x] == "2"){
           image = this.tile_images[68];
-        } else if (this.gridarray[i][x] == "-") {
+        } else if (this.gridarray[i][x] == "4") {
           image = this.tile_images[69]; 
         }
         this.draw_tile(image, x, i, this.grid.get(x + "_" + i).z, graphics, X_start, Y_start);
@@ -572,7 +767,7 @@ class Grid{
     }
     return graphics;
   }
-  displayIso(camx, camy, camscale){ // out of use
+  displayIso(camx, camy, camscale){ // out of use and broken
     this.gridscale = camscale;
     // let newgraphics = createGraphics(windowWidth, windowHeight);
     // this.draw_grid(camx, camy, newgraphics);
@@ -610,6 +805,7 @@ class Grid{
 
 function createPlayerSprite(name) {
     let mechanicSprite = new Sprite(0, 0, 10);
+    mechanicSprite.visible = false;
     return mechanicSprite;
     // mechanicSprite.visible = true;
     // mechanicSprite.collider = 'static';
