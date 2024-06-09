@@ -10,26 +10,55 @@ class Tile{
 
 
 class Grid{
-  constructor(width, height, cellSize, tile_images){ // width and height in tiles, width is to the right, height is to left cuz isometric
+  constructor(w, h, cellSize){ // width and height in tiles, width is to the right, height is to left cuz isometric
     this.grid = new Map();
-    this.width = width;
-    this.GRID_SIZE = width;
-    this.height = height;
-    this.tile_images = tile_images;
-    this.gridarray = this.generateMapWithCenterRoom(this.width,this.height,8,10)
-    console.log(this.gridarray)
-    for (let i = 0; i < this.width; i++) {
-      for (let j = 0; j < this.height; j++) {
-        this.grid.set(i + "_" + j, new Tile(i, j, round(random(0,2)), 0));
-      }
-    }
+    // first, we generate the map
+    // then, we build the map into map tiles
+    // then, we build the visual map
+
+    this.mapTiles = null;
+    this.displayMapTiles = null;
+
+    this.width = w;
+    this.GRID_SIZE = w;
+    this.height = h;
+    this.cellSize = cellSize;
+    this.numCols = w;
+    this.numRows = h;
+
+    this.gridscale = 1.0;
+    this.TILE_WIDTH = cellSize;
+    this.TILE_HEIGHT = 16;
+    this.TILE_SIDE_LENGTH = cellSize; //(this.TILE_WIDTH**2 + this.TILE_HEIGHT**2)**0.5;
+
+
+    this.truewidth = this.width * this.TILE_WIDTH;
+    this.trueheight = this.height * this.TILE_HEIGHT;
+    console.log(this.truewidth, this.trueheight)
+    // this.graphics = this.draw_grid(windowWidth/2, windowHeight/2, this.graphics);
+    this.xstart = this.truewidth / 2 - this.TILE_WIDTH / 2;
+    this.ystart = this.trueheight / 2 - this.GRID_SIZE * this.TILE_HEIGHT / 2;
+
+
+
+    // this.tile_images = tile_images;
+    this.gridarray = this.generateMapWithCenterRoom(this.width,this.height,8,10);
+    // console.log(this.gridarray)
     this.generateMap();
+    this.isoarray = this.generateIsometricTileArray();
+    // console.log(this.gridarray)
+    // for (let i = 0; i < this.width; i++) {
+    //   for (let j = 0; j < this.height; j++) {
+    //     this.grid.set(i + "_" + j, new Tile(i, j, round(random(0,2)), 0));
+    //   }
+    // }
+    
     // console.log(this.grid, this.width, this.height, this.gridarray)
 
-    this.cellSize = cellSize;
-    this.numCols = width;
-    this.numRows = height;
-    this.mapTiles = null;
+    
+
+
+
     this.mapDiagram = null;
     this.mapBuilt = false;
     this.mapX = 0;
@@ -39,8 +68,7 @@ class Grid{
     this.h = 2;
 
 
-    // Store the location of the real treasure room
-    this.realTreasureRoomLocation = [];
+
 
     // Stores location of map overlay areas
     this.mapOverlayAreas;
@@ -54,32 +82,49 @@ class Grid{
     this.coingroup = new Group();
     this.mapOverlayAreaSprite = new Group();
   
-    this.graphics = createGraphics(windowWidth, windowHeight);
-    this.gridscale = 1.0;
-    this.TILE_WIDTH = cellSize;
-    this.TILE_HEIGHT = 16;
-    this.truewidth = this.width * this.TILE_WIDTH;
-    this.trueheight = this.height * this.TILE_HEIGHT;
-    console.log(this.truewidth, this.trueheight)
-    this.graphics = this.draw_grid(windowWidth/2, windowHeight/2, this.graphics);
-
+    // this.graphics = createGraphics(windowWidth, windowHeight);
     
+
+    this.displayFloorBricks = new Group();
+    this.displayWallBricks1 = new Group();
+    this.displayBoundaryBricks = new Group();
+    this.displayEmptyBricks = new Group();
+    this.displayGoldBricks = new Group();
+
+    this.wallColor = '#484848';
+    this.pathColor = "#484848";
+    this.boundaryColor = "#484848";
+    this.goldColor = "#484848";
+    
+    // three storages for tiles: the map, the mechanics, and the display
   }
 
-  get_tile(x, y){
-    return this.grid.get(x + "_" + y);
+  getTile(x, y){ // from the map
+    if (this.grid.has(x + "_" + y)){
+      return this.grid.get(x + "_" + y);
+    } else {
+      return null;
+    }
+    // return this.grid.get(x + "_" + y);
   }
+  getTileFromMechanicIndex(x, y){ //based on the index x and y of the tile
+    //gets sprite object\
+    let tileIndex = x * this.numCols + y;
+    return this.mapTiles[tileIndex];
+  }
+
   generateMap(){
-    for (let i = 0; i < this.width; i++) {
-      for (let j = 0; j < this.height; j++) {
+    for (let i = 0; i < this.numCols; i++) {
+      for (let j = 0; j < this.numRows; j++) {
         this.grid.set(i + "_" + j, new Tile(i, j, round(random(0,2)), this.gridarray[j][i]));
       }
     }
+    // console.log(this.grid)
   }
   // temporary generation function for testing
   generateMapWithCenterRoom(mapWidth, mapHeight, treasureRoomWidth, treasureRoomHeight) {
       // Initialize the map with "*" for the outside area.
-      let map = Array.from({ length: mapHeight }, () => Array(mapWidth).fill('_'));
+      let map = Array.from({ length: mapHeight }, () => Array(mapWidth).fill('f'));
 
       // Set the outer boundary of the map as "x".
       for (let y = 0; y < mapHeight; y++) {
@@ -172,7 +217,52 @@ class Grid{
       return map.map(row => row.join(''));
   }
 
-  buildMap() {
+  generateIsometricTileArray() {
+    this.isoarray = Array.from({ length: (this.numCols + this.numRows - 1) }, () => Array(this.numCols + this.numRows - 1).fill('.'));
+    let xstart = round((this.numCols + this.numRows - 1) / 2);
+    let ystart = 0
+    for (let i = 0; i < this.numCols; i++) {
+      for (let j = 0; j < this.numRows; j++) {
+        this.editIsoTileArray(i, j, this.grid.get(i + "_" + j).type, xstart, ystart);
+      }
+    }
+    this.isoarray = this.isoarray.map(row => row.join('')); 
+    // console.log(this.isoarray)
+    return this.isoarray;
+  }
+
+  editIsoTileArray(x, y, type, xstart, ystart){
+    let arrayx = (x - y) + xstart;
+    let arrayy = (x + y) + ystart;
+    
+    if (this.isoarray){
+      this.isoarray[arrayy][arrayx] = type;
+    }
+    // if (arrayy < 5){
+    //   console.log(arrayx, arrayy, type, this.isoarray[arrayy])
+    // }
+    
+  }
+
+  getIndexFromIsoArray(x, y){
+    let xstart = round((this.numCols + this.numRows - 1) / 2);
+    let ystart = 0;
+    let arrayx = (x - y) + xstart;
+    let arrayy = (x + y) + ystart;
+    return arrayx * (this.numCols + this.numRows - 1) + arrayy;
+  }
+
+  findFromCoords(x,y){
+    let xstart = round((this.numCols + this.numRows - 1) / 2) * this.TILE_WIDTH / 2;
+    let ystart = 0;
+    let coordx = (y / this.TILE_HEIGHT) - (ystart / this.TILE_HEIGHT) + (x / this.TILE_WIDTH) - (xstart / this.TILE_WIDTH);
+    let coordy = coordx + (2 * xstart) / this.TILE_WIDTH -  (2 * x) / this.TILE_WIDTH;
+    // console.log(coordx, coordy, x, y, xstart, ystart)
+    return createVector(coordx, coordy);
+  }
+
+
+  buildMap() { // out of use
     // Leveraging p5play mechanics to manage player movement
 
       // Clear existing map before building
@@ -180,76 +270,77 @@ class Grid{
           this.mapTiles.removeAll();
       }
 
-      this.numCols = this.numCols;
-      this.numRows = this.numRows;
-      this.mapDiagram = createGraphics(this.numCols * this.w, this.numRows * this.h);
+      // this.numCols = this.numCols;
+      // this.numRows = this.numRows;
+      // this.mapDiagram = createGraphics(this.numCols * this.w, this.numRows * this.h);
 
       // Construct map based on this from server side
 
 
-      this.floorBricks.w = this.cellSize; // Width of each brick
-      this.floorBricks.h = this.cellSize; // Height of each brick
-      this.floorBricks.tile = "_";
-      this.floorBricks.color = this.wallColor;
+      this.floorBricks.w = this.TILE_SIDE_LENGTH; // Width of each brick
+      this.floorBricks.h = this.TILE_SIDE_LENGTH; // Height of each brick
+      this.floorBricks.tile = "f";
+      // this.floorBricks.color = this.wallColor;
       this.floorBricks.collider = 'static';
-      this.floorBricks.stroke = this.wallColor;
-      this.floorBricks.layer = 990;
+      // this.floorBricks.stroke = this.wallColor;
+      this.floorBricks.overlaps(allSprites);
+      // this.floorBricks.layer = 990;
     //   this.floorBricks.img = "./textures/wall.png";
 
-      this.wallBricks1.w = this.cellSize;
-      this.wallBricks1.h = this.cellSize;
+      this.wallBricks1.w = this.TILE_SIDE_LENGTH;
+      this.wallBricks1.h = this.TILE_SIDE_LENGTH;
       this.wallBricks1.tile = "1";
-      this.wallBricks1.color = this.pathColor;
+      // this.wallBricks1.color = this.pathColor;
       this.wallBricks1.collider = 'static';
-      this.wallBricks1.stroke = this.pathColor;
-      this.wallBricks1.layer = 990;
+      // this.wallBricks1.stroke = this.pathColor;
+      // this.wallBricks1.layer = 990;
     //   this.wallBricks1.img = "./textures/path.png";
 
-      this.boundaryBricks.w = this.cellSize;
-      this.boundaryBricks.h = this.cellSize;
+      this.boundaryBricks.w = this.TILE_SIDE_LENGTH;
+      this.boundaryBricks.h = this.TILE_SIDE_LENGTH;
       this.boundaryBricks.tile = "x";
-      this.boundaryBricks.color = this.boundaryColor;
+      // this.boundaryBricks.color = this.boundaryColor;
       this.boundaryBricks.collider = 'static';
-      this.boundaryBricks.stroke = this.boundaryColor;
-      this.boundaryBricks.layer = 990;
+      // this.boundaryBricks.stroke = this.boundaryColor;
+      // this.boundaryBricks.layer = 990;
     //   this.boundaryBricks.img = "./textures/boundary.png";
 
-      this.goldBricks.w = this.cellSize;
-      this.goldBricks.h = this.cellSize;
+      this.goldBricks.w = this.TILE_SIDE_LENGTH;
+      this.goldBricks.h = this.TILE_SIDE_LENGTH;
       this.goldBricks.tile = "G";
-      this.goldBricks.color = this.goldColor;
+      // this.goldBricks.color = this.goldColor;
       this.goldBricks.collider = 'static';
-      this.goldBricks.stroke = this.goldColor;
+      // this.goldBricks.stroke = this.goldColor;
       this.goldBricks.overlaps(allSprites);
-      this.goldBricks.layer = -999;
+      // this.goldBricks.layer = -999;
     //   this.goldBricks.img = "./textures/gold.png";
 
-      this.emptyBricks.w = this.cellSize;
-      this.emptyBricks.h = this.cellSize;
+      this.emptyBricks.w = this.TILE_SIDE_LENGTH;
+      this.emptyBricks.h = this.TILE_SIDE_LENGTH;
       this.emptyBricks.tile = "-";
-      this.emptyBricks.color = "#484848";
+      // this.emptyBricks.color = "#484848";
       this.emptyBricks.collider = 'static';
-      this.emptyBricks.stroke = "#484848";
+      // this.emptyBricks.stroke = "#484848";
       this.emptyBricks.overlaps(allSprites);
-      this.emptyBricks.layer = -999;
+      // this.emptyBricks.layer = -999;
     //   this.emptyBricks.img = "./textures/empty.png";
 
       // Position tiles at the bottom center of the screen
       this.mapTiles = new Tiles(this.gridarray, // 2D array of tiles
           0, // x to centralise map
           0, // y to position at top
-          this.cellSize,
-          this.cellSize);
+          this.TILE_SIDE_LENGTH,
+          this.TILE_SIDE_LENGTH);
 
       this.mapTiles.visible = false;
-      console.log(this.mapTiles)
+      // console.log(this.mapTiles)
 
       this.mapX = 0;//(width / 2) - (this.numCols / 2) * this.cellSize;
       this.mapY = 0;//height - this.numRows * this.cellSize;
 
       // Obtain the real treasure room
       // this.realTreasureRoomLocation = this.realTreasureRoomLocation;
-      this.mapCellSize = this.cellSize;
+      this.mapCellSize = this.TILE_SIDE_LENGTH;
 
       // Build map overlays
       // Define props for map overlays
@@ -279,6 +370,126 @@ class Grid{
       this.mapBuilt = true;
   }
 
+  buildVisualMap() {
+    // using p5play to display the map
+    // Draw the map in isometric view
+    //remove sprites in the display group
+    // for (let i = 0; i < this.displayMapTiles.length; i++) {
+    //   this.displayMapTiles[i].remove();
+    // }
+    // this.displayMapTiles = [];
+
+    if (this.displayMapTiles != null) {
+      this.displayMapTiles.removeAll();
+    }
+
+    this.displayFloorBricks.w = this.TILE_WIDTH; // Width of each brick
+    this.displayFloorBricks.h = this.TILE_HEIGHT; // Height of each brick
+    this.displayFloorBricks.tile = "f";
+    // this.displayFloorBricks.color = this.wallColor;
+    this.displayFloorBricks.collider = 'static';
+    // this.displayFloorBricks.stroke = this.wallColor;
+    this.displayFloorBricks.overlaps(allSprites);
+    this.displayFloorBricks.layer = -990;
+    this.displayFloorBricks.img = './new_tileset/tile_066.png';
+
+    this.displayWallBricks1.w = this.TILE_WIDTH;
+    this.displayWallBricks1.h = this.TILE_HEIGHT
+    this.displayWallBricks1.tile = "1";
+    // this.displayWallBricks1.color = this.pathColor;
+    this.displayWallBricks1.collider = 'static';
+    // this.displayWallBricks1.stroke = this.pathColor;
+    // this.displayWallBricks1.overlaps(allSprites);
+    this.displayWallBricks1.layer = 990;
+    this.displayWallBricks1.img = './new_tileset/tile_067.png';
+
+    this.displayBoundaryBricks.w = this.TILE_WIDTH;
+    this.displayBoundaryBricks.h = this.TILE_HEIGHT;
+    this.displayBoundaryBricks.tile = "x";
+    // this.displayBoundaryBricks.color = this.boundaryColor;
+    this.displayBoundaryBricks.collider = 'static';
+    // this.displayBoundaryBricks.stroke = this.boundaryColor;
+    // this.displayBoundaryBricks.overlaps(allSprites);
+    this.displayBoundaryBricks.layer =-990;
+    this.displayBoundaryBricks.img = './new_tileset/tile_065.png';
+
+    this.displayGoldBricks.w = this.TILE_WIDTH;
+    this.displayGoldBricks.h = this.TILE_HEIGHT;
+    this.displayGoldBricks.tile = "G";
+    // this.displayGoldBricks.color = this.goldColor;
+    this.displayGoldBricks.collider = 'static';
+    // this.displayGoldBricks.stroke = this.goldColor;
+    this.displayGoldBricks.overlaps(allSprites);
+    this.displayGoldBricks.layer = -999;
+    this.displayGoldBricks.img = './new_tileset/tile_068.png';
+
+    this.displayEmptyBricks.w = this.TILE_WIDTH;
+    this.displayEmptyBricks.h = this.TILE_HEIGHT;
+    this.displayEmptyBricks.tile = "-";
+    // this.displayEmptyBricks.color = "#484848";
+    this.displayEmptyBricks.collider = 'static';
+    // this.displayEmptyBricks.stroke = "#484848";
+    this.displayEmptyBricks.overlaps(allSprites);
+    this.displayEmptyBricks.layer = -999;
+    this.displayEmptyBricks.img = './new_tileset/tile_069.png';
+
+    this.displayMapTiles = new Tiles(this.isoarray, // 2D array of tiles
+        0, // x to centralise map
+        0, // y to position at top
+        this.TILE_WIDTH / 2,
+        this.TILE_HEIGHT / 2);
+    // this.mapTiles.collider = 'none';
+
+    console.log(this.displayMapTiles)
+
+
+    for (let i = 0; i < this.displayMapTiles.length; i++) {
+      let tile = this.displayMapTiles[i]; //sprite object
+      let vect = this.findFromCoords(tile.pos.x, tile.pos.y);
+      let z = this.getTile(vect.x, vect.y).z;
+      if (z != 0){
+        // tile.pos.y -= z * this.TILE_HEIGHT / 2;
+      }
+    }
+
+
+    // for (let i = 0; i < this.numCols; i++) { //x 
+    //     for (let j = 0; j < this.numRows; j++) { // y
+    //       let tile = this.getTile(i, j);
+    //       if (tile != null) {
+    //         // console.log(43)
+    //         let displayTile;
+    //         if (tile.type == "f") {
+    //           displayTile = new this.displayFloorBricks.Sprite();
+    //         } else if (tile.type == "1") {
+    //             displayTile = new this.displayWallBricks1.Sprite();
+    //         } else if (tile.type == "x") {
+    //             displayTile = new this.displayBoundaryBricks.Sprite();
+    //         } else if (tile.type == "G") {
+    //             displayTile = new this.displayGoldBricks.Sprite();
+    //         } else if (tile.type == "-") {
+    //             displayTile = new this.displayEmptyBricks.Sprite();
+    //         } else {
+    //             displayTile = new this.displayEmptyBricks.Sprite();
+    //         }
+    //         displayTile.pos.x = this.xstart + (i - j) * this.TILE_WIDTH/2;//i * this.cellSize + (j * this.cellSize / 2);
+    //         displayTile.pos.y = this.ystart + (i + j) * this.TILE_HEIGHT/2 - tile.z * this.TILE_HEIGHT/2; 
+    //         // j * this.cellSize / 2 - i * this.cellSize / 2;
+    //         this.displayMapTiles.push(displayTile); 
+    //       }
+    //       // console.log(tile)
+          
+    //   }
+
+    // }
+    // console.log(" displayer",this.displayMapTiles)
+  }
+
+
+  getDisplayTile(x, y){
+    return this.displayMapTiles[x * this.numCols + y];
+  }
+
   random(min, max) {
         let rand;
 
@@ -302,12 +513,12 @@ class Grid{
             return rand * (max - min) + min;
         }
     };
-  draw_tile(img, x, y, z, graphics, X_start, Y_start) {
+  draw_tile(img, x, y, z, graphics, X_start, Y_start) { // out of use
     let X_screen = X_start + (x - y) * this.TILE_WIDTH/2;
     let Y_screen = Y_start + (x + y) * this.TILE_HEIGHT/2 - z * this.TILE_HEIGHT/2;
     graphics.image(img, X_screen, Y_screen);
   }
-  draw_grid(camx, camy, graphic = this.graphics) {
+  draw_grid(camx, camy, graphic = this.graphics) { // out of use
     let graphics = createGraphics(this.truewidth, this.trueheight);
     let offsetx = camx - this.truewidth / 2;
     let offsety = camy - this.trueheight / 2; //scaling needs to be dealt with
@@ -361,7 +572,7 @@ class Grid{
     }
     return graphics;
   }
-  displayIso(camx, camy, camscale){
+  displayIso(camx, camy, camscale){ // out of use
     this.gridscale = camscale;
     // let newgraphics = createGraphics(windowWidth, windowHeight);
     // this.draw_grid(camx, camy, newgraphics);
@@ -372,12 +583,14 @@ class Grid{
     // console.log(offsetx, offsety)
     this.graphics = this.draw_grid(camx, camy, this.graphics);
     //how to delete prev image? 
+    this.xstart = (this.truewidth / 2 - this.TILE_WIDTH / 2) * this.gridscale + offsetx;
+    this.ystart = (this.trueheight / 2 - this.GRID_SIZE * this.TILE_HEIGHT / 2) * this.gridscale + offsety; 
     image(this.graphics,  - 1 / 2* (this.gridscale * this.truewidth - windowWidth) + offsetx,  - 1 / 2 * (this.gridscale * this.trueheight - windowHeight) + offsety, this.truewidth * this.gridscale, this.trueheight * this.gridscale);
     // let newGraphics = createGraphics(windowWidth * this.gridscale, windowHeight * this.gridscale);
     // newGraphics.image(this.graphics,  -windowWidth / 2* (this.gridscale - 1), -windowHeight / 2 * (this.gridscale - 1), windowWidth * this.gridscale, windowHeight * this.gridscale);
     // image(this.graphics,  -windowWidth / 2* (this.gridscale - 1),  - windowHeight / 2 * (this.gridscale - 1), windowWidth * this.gridscale, windowHeight * this.gridscale);
   }
-  buildIso(camx, camy){
+  buildIso(camx, camy){ // out of use
     this.graphics = this.draw_grid(camx, camy);
     // console.log(this.graphics)
   }
@@ -388,4 +601,73 @@ class Grid{
   resize(size){
     this.gridscale = size;
   }
+  setPlayerPosition(servermap, player){
+    // console.log(player)
+    player.pos.x = this.numCols/2 * this.TILE_SIDE_LENGTH;
+    player.pos.y = this.numRows/2 * this.TILE_HEIGHT;
+  }
+}
+
+function createPlayerSprite(name) {
+    let mechanicSprite = new Sprite(0, 0, 10);
+    return mechanicSprite;
+    // mechanicSprite.visible = true;
+    // mechanicSprite.collider = 'static';
+    // mechanicSprite.overlaps(allSprites);
+
+    // Load sprite sheet
+    // playerSprite.spriteSheet = "./images/textures/dwarf-sprite-sheet.png";
+    // playerSprite.anis.offset.y = -4;
+    // playerSprite.anis.frameDelay = 2;
+    // playerSprite.addAnis({
+    //     idle: {row: 0, frames: 5, w: 64, h: 32},
+    //     run: {row: 1, frames: 8, w: 64, h: 32},
+    // });
+    // playerSprite.anis.scale = 2;
+
+    // // Manually draw the ign by overriding the draw function
+    // // Taking reference from https://github.com/quinton-ashley/p5play/blob/main/p5play.js
+    // playerSprite.draw = () => {
+    //     fill("white");
+    //     textAlign(CENTER, CENTER);
+    //     textSize(16);
+    //     text(name, 0, -35);
+
+    //     playerSprite.ani.draw(playerSprite.offset.x, playerSprite.offset.y, 0, playerSprite.scale.x, playerSprite.scale.y);
+    // }
+
+
+    
+}
+
+function createVisiblePlayerSprite(mechanicSprite, name, map) {
+    let playerSprite = new Sprite(0, 0, 32, 32);
+    playerSprite.visible = true;
+    playerSprite.collider = 'none';
+    // Load sprite sheet
+    // playerSprite.spriteSheet = mechanicSprite;
+    // playerSprite.anis.offset.y = -4;
+    // playerSprite.anis.frameDelay = 2;
+    // playerSprite.addAnis({
+    //     idle: {row: 0, frames: 5, w: 64, h: 32},
+    //     run: {row: 1, frames: 8, w: 64, h: 32},
+    // });
+    // playerSprite.anis.scale = 2;
+
+    // Manually draw the ign by overriding the draw function
+    // Taking reference from
+    playerSprite.draw = () => {
+        
+        fill("white");
+        textAlign(CENTER, CENTER);
+        textSize(16);
+        text(name, 0, -35);
+
+        circle(0, 0, 32);
+        rect(10, 0, 32, 50);
+
+        // playerSprite.ani.draw(playerSprite.offset.x, playerSprite.offset.y, 0, playerSprite.scale.x, playerSprite.scale.y);
+    }
+    return playerSprite;
+
 }

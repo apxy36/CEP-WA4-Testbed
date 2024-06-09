@@ -1,10 +1,11 @@
 const GRID_SIZE = 10;
 
-let tile_images = [];
+// let tile_images = [];
 const TILE_WIDTH = 32;
 const TILE_HEIGHT = 16;
 let GRID_SCALE = 1.0;
 
+let mechplayer;
 
 //next, to change the "x" into numbers, and then to change the numbers into images
 //then to change the images into the isometric view
@@ -29,18 +30,27 @@ let grid = [
 
 
 let graphics
-let cam
+let cam;
+let displayPlayer;
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  for (let i = 0; i <= 114; i++) {
-    tile_images.push(loadImage("./new_tileset/tile_" + i.toString().padStart(3, '0') + ".png"));
-  }
+  frameRate(60);
+  // for (let i = 0; i <= 114; i++) {
+  //   tile_images.push(loadImage("./new_tileset/tile_" + i.toString().padStart(3, '0') + ".png"));
+  // }
 
-  map = new Grid(80, 80, 32, tile_images)
-  cam = new CameraManager(windowWidth / 2, windowHeight / 2);
-  graphics = createGraphics(windowWidth, windowHeight);
-  map.buildMap(map);
-  map.buildIso();
+  map = new Grid(80, 80, 32)
+  cam = new CameraManager(windowWidth / 2, windowHeight / 2, camera);
+  // graphics = createGraphics(windowWidth, windowHeight);
+  // map.buildMap();
+  mechplayer = createPlayerSprite('test') // creates mechanics for player
+  displayPlayer = createVisiblePlayerSprite(mechplayer, 'test', map);
+  
+  // map.buildIso();
+  
+  map.buildVisualMap();
+  map.setPlayerPosition(1, mechplayer);
+  cam.setTarget(displayPlayer);
 }
 
 function draw_tile(img, x, y, graphics) {
@@ -73,10 +83,29 @@ function draw_grid(graphic) {
     // }
   }
 }
+function manageVisiblePlayer(mechanicSprite, playerSprite, map){
+  // console.log(mechanicSprite.pos.x, mechanicSprite.pos.y, playerSprite.pos.x, playerSprite.pos.y, map)
+  // project the sprite onto isometric grid from x and y
+  let X_screen = map.xstart + (mechanicSprite.pos.x - mechanicSprite.pos.y) * 1/2;
+  let Y_screen = map.ystart + (mechanicSprite.pos.x + mechanicSprite.pos.y) * (map.TILE_HEIGHT/4) / map.TILE_HEIGHT - 0 * map.TILE_HEIGHT/2; // z is 0 for now
+  console.log(X_screen, Y_screen, mechanicSprite.pos.x, mechanicSprite.pos.y)
+  playerSprite.pos.x = X_screen;
+  playerSprite.pos.y = Y_screen;
 
+  playerSprite.pos.x = mechanicSprite.pos.x;
+  playerSprite.pos.y = mechanicSprite.pos.y;
+
+}
+
+
+// next step: create a player which interacts with the grid -> DONE
+// then integrate z axis mvt with player
+// make an entity manager to manage all entities
+// make mapManager to manage all maps
+// introduce multiplayer
 function draw() {
   background("black");
-  frameRate(60);
+  
   // draw_grid(graphics);
   // let newGraphics = createGraphics(windowWidth * GRID_SCALE, windowHeight * GRID_SCALE);
   // newGraphics.image(graphics,  -windowWidth / 2* (GRID_SCALE - 1), -windowHeight / 2 * (GRID_SCALE - 1), windowWidth * GRID_SCALE, windowHeight * GRID_SCALE);
@@ -84,9 +113,12 @@ function draw() {
   // image(graphics, 0,0)
   // graphics = newGraphics;
   cam.update();
-  map.displayIso(cam.camera.x, cam.camera.y, cam.true_scale);
-  reSize();
-  moveCamera();
+  manageVisiblePlayer(mechplayer, displayPlayer, map)
+  // map.displayIso(cam.camera.x, cam.camera.y, cam.true_scale);
+  move();
+
+  // reSize();
+  // moveCamera();
 }
 
 function reSize(){
@@ -108,4 +140,65 @@ function moveCamera(){
   } else if (kb.pressing("d")){
     cam.setCoordTarget(cam.target.x + 6 * map.gridscale, cam.target.y);
   }
+}
+
+function move() {
+    const SPEED = 5;
+    const adjacentSPEED = 2 * 5**0.5;
+    const oppSPEED = 5**0.5;
+
+    // Play running animation when moving
+    // Invert animation where necessary
+    if (kb.pressing("w")) {
+        // playerSprite.changeAni('run');
+        displayPlayer.scale.x = 1;
+        // move in a diagonal direction based on isometric x and y
+        mechplayer.pos.y -= SPEED * oppSPEED / SPEED; 
+        mechplayer.pos.x += SPEED * adjacentSPEED / SPEED;
+
+        // mechplayer.pos.y -= SPEED;
+        // breakDir = 0;
+    }
+    if (kb.pressing("a")) {
+        // playerSprite.changeAni('run');
+        displayPlayer.scale.x = -1;
+        mechplayer.pos.x -= SPEED * adjacentSPEED / SPEED;
+        mechplayer.pos.y -= SPEED * oppSPEED / SPEED;
+        // breakDir = 1;
+    }
+    if (kb.pressing("s")) {
+        // playerSprite.changeAni('run');
+        displayPlayer.scale.x = 1;
+        mechplayer.pos.y += SPEED * oppSPEED / SPEED;
+        mechplayer.pos.x -= SPEED * adjacentSPEED / SPEED;
+        // breakDir = 2;
+    }
+    if (kb.pressing("d")) {
+        // playerSprite.changeAni('run');
+        displayPlayer.scale.x = 1;
+        mechplayer.pos.x += SPEED * adjacentSPEED / SPEED;
+        mechplayer.pos.y += SPEED * oppSPEED / SPEED;
+        // breakDir = 3;
+    }
+
+    // Reset animation after player stops moving
+    if (kb.released("w") || kb.released("s") || kb.released("d")) {
+        displayPlayer.scale.x = 1;
+        // playerSprite.changeAni('idle');
+    }
+    else if (kb.released("a")) {
+        displayPlayer.scale.x = -1;
+        // playerSprite.changeAni('idle');
+    }
+
+    // To allow the players to change the block added
+    // if (kb.pressing("p") && allowMapModification) {
+    //     wallEditorMode = "*";
+    // } else if (kb.pressing("q") && allowMapModification) {
+    //     wallEditorMode = "=";
+    // } else if (kb.pressing("b") && allowMapModification) { //barrier block
+    //     wallEditorMode = "x";
+    // } else if (kb.pressing("backspace") && allowMapModification) {
+    //     wallEditorMode = "-";
+    // }
 }
