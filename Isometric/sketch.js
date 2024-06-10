@@ -45,11 +45,12 @@ function setup() {
   // graphics = createGraphics(windowWidth, windowHeight);
   // map.buildMap();
   mechplayer = createPlayerSprite('test') // creates mechanics for player
+  map.buildVisualMap();
   displayPlayer = createVisiblePlayerSprite(mechplayer, 'test', map);
   
   // map.buildIso();
   
-  map.buildVisualMap();
+  
   map.setPlayerPosition(1, mechplayer);
   cam.setTarget(displayPlayer);
 }
@@ -111,10 +112,14 @@ function manageVisiblePlayer(mechanicSprite, playerSprite, map){
 
 
 // next step: create a player which interacts with the grid -> DONE
-// then integrate z axis mvt with player
+// then integrate z axis mvt with player -> DONE
+// improve map generation
+
 // make an entity manager to manage all entities
 // make mapManager to manage all maps
 // introduce multiplayer
+// animate player sprites
+// animate tiles
 function draw() {
   background("black");
   

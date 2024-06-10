@@ -40,12 +40,12 @@ class CameraManager {
             this.true_scale += (this.targetscaling - this.true_scale) / (this.DRIFT_FACTOR / 2)
             // console.log("reached target");
         } else if (distance < 100) {
-            this.targetscaling = 1 + ((100 - distance) / 100);
+            this.targetscaling = 1.2 + ((100 - distance) / 100) * 0.8;
             // console.log(this.targetscaling, this.true_scale, this.targetscaling - this.true_scale)
             this.true_scale += (this.targetscaling - this.true_scale) / (this.DRIFT_FACTOR / 2);// * (distance / 100);
             // this.camera = p5.Vector.add(this.camera, p5.Vector.sub(this.target, this.camera).normalize().mult(10));
         } else {
-            this.targetscaling = 1;
+            this.targetscaling = 1.2;
         }
         // console.log(this.targetscaling, this.true_scale, this.targetscaling - this.true_scale)
         

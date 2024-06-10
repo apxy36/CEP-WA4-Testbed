@@ -25,6 +25,7 @@ class Grid{
     this.cellSize = cellSize;
     this.numCols = w;
     this.numRows = h;
+    this.numLayers = 7; // including boundary
 
     this.gridscale = 1.0;
     this.TILE_WIDTH = cellSize;
@@ -85,6 +86,12 @@ class Grid{
     // this.graphics = createGraphics(windowWidth, windowHeight);
     
     // for mechanics
+    // this.displayLayers = [];
+    // for (let i = 0; i < this.numLayers; i++){
+    //   this.displayLayers.push(new Group());
+    // }
+
+
     this.displayLayer0 = new Group();
     this.displayLayer1 = new Group();
     this.displayLayer2 = new Group();
@@ -94,6 +101,11 @@ class Grid{
     this.displayBoundaryLayer = new Group();
 
     // for display
+    // this.displayElevatedTileLayers = [];
+    // for (let i = 0; i < this.numLayers - 1; i++){
+    //   this.displayElevatedTileLayers.push(new Group());
+    // }
+
     this.displayElevatedTileLayer1 = new Group();
     this.displayElevatedTileLayer2 = new Group();
     this.displayElevatedTileLayer3 = new Group();
@@ -439,6 +451,30 @@ class Grid{
       this.displayMapTiles.removeAll();
     }
 
+    // for (let i = 0; i < this.numLayers ; i++){
+    //   this.displayLayers[i].w = this.TILE_WIDTH; // Width of each brick
+    //   this.displayLayers[i].h = this.TILE_HEIGHT; // Height of each brick
+    //   if (i != this.numLayers - 1){
+    //     this.displayLayers[i].tile = toString(i);
+    //   } else {
+    //     this.displayLayers[i].tile = "B";
+    //   }
+    //   this.displayLayers[i].collider = 'static';
+    //   if (i == 0 || i == 1){
+    //     this.displayLayers[i].overlaps(allSprites);
+    //   }
+    //   // this.displayLayers[i].overlaps(allSprites);
+    //   this.displayLayers[i].layer = (i - 1)*999;
+    //   if (i == 0){
+    //     this.displayLayers[i].img = './new_tileset/tile_066.png';
+    //   } else if (i == this.numLayers - 1){
+    //     this.displayLayers[i].img = './new_tileset/tile_071.png'; //boundary
+    //   } else {
+    //     this.displayLayers[i].visible = false;
+    //   // this.displayLayers[i].img = "./textures/wall.png";
+    //   }
+    // }
+
     this.displayLayer0.w = this.TILE_WIDTH; // Width of each brick
     this.displayLayer0.h = this.TILE_HEIGHT; // Height of each brick
     this.displayLayer0.tile = "0";
@@ -491,12 +527,23 @@ class Grid{
     // this.displayLayer5.img = './new_tileset/tile_070.png';
     this.displayLayer5.visible = false;
 
+    
+
     this.displayBoundaryLayer.w = this.TILE_WIDTH;
     this.displayBoundaryLayer.h = this.TILE_HEIGHT;
     this.displayBoundaryLayer.tile = "B";
     this.displayBoundaryLayer.collider = 'static';
     this.displayBoundaryLayer.layer = -500; //5*999;
     this.displayBoundaryLayer.img = './new_tileset/tile_071.png';
+
+    // for (let i = 0; i < this.numLayers - 1; i++){
+    //   this.displayElevatedTileLayers[i].w = this.TILE_WIDTH;
+    //   this.displayElevatedTileLayers[i].h = this.TILE_HEIGHT;
+    //   this.displayElevatedTileLayers[i].collider = 'static';
+    //   this.displayElevatedTileLayers[i].overlaps(allSprites);
+    //   this.displayElevatedTileLayers[i].layer = i*999;
+    //   this.displayElevatedTileLayers[i].img = './new_tileset/tile_027.png';
+    // }
 
     this.displayElevatedTileLayer1.w = this.TILE_WIDTH;
     this.displayElevatedTileLayer1.h = this.TILE_HEIGHT;
@@ -571,6 +618,13 @@ class Grid{
         newtile.pos.y = tile.pos.y;// + z * this.TILE_HEIGHT / 2; //make an entirely new tile that displays another image but has no collision, at the elevated pos. the original tile is at the original pos
         
         let displayTile;
+        // if (z != 'B'){
+        //   displayTile = new this.displayElevatedTileLayers[z - 1].Sprite();
+        // } else {
+        //   displayTile = new this.displayElevatedBoundaryLayer.Sprite();
+        // } else {
+        //   displayTile = new this.displayElevatedTileLayer1.Sprite();
+        // }
         if (z == 1){
           displayTile = new this.displayElevatedTileLayer1.Sprite();
         } else if (z == 2){
@@ -631,7 +685,13 @@ class Grid{
   }
 
   updateCollisionLayers(playerZ){ // add layer 5 
+    // for (let i = -1; i < 1; i++){
+    //   let index = min(max(playerZ + i, 0), this.numLayers - 2);
+    //   this.displayLayers[index].overlaps(allSprites);
+    // }
+
     if (playerZ == 0){
+
       this.displayLayer0.overlaps(allSprites);
       this.displayLayer1.overlaps(allSprites);
       // this.displayLayer2.overlaps(allSprites);
