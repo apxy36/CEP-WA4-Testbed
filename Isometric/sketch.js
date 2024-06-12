@@ -8,6 +8,7 @@ let GRID_SCALE = 1.0;
 let mechplayer;
 let playerZ = 0;
 let prevPlayerZ = 0; 
+let em;
 
 //next, to change the "x" into numbers, and then to change the numbers into images
 //then to change the images into the isometric view
@@ -41,13 +42,15 @@ function setup() {
   //   tile_images.push(loadImage("./new_tileset/tile_" + i.toString().padStart(3, '0') + ".png"));
   // }
 
-  map = new Grid(70, 70, 32)
+  map = new mapBuilder(70, 70, 32)
   cam = new CameraManager(windowWidth / 2, windowHeight / 2, camera);
+  em = new EntityManager()
   // graphics = createGraphics(windowWidth, windowHeight);
   // map.buildMap();
   mechplayer = createPlayerSprite('test') // creates mechanics for player
   map.buildVisualMap();
   displayPlayer = createVisiblePlayerSprite(mechplayer, 'test', map);
+
   
   // map.buildIso();
   
@@ -117,7 +120,7 @@ function manageVisiblePlayer(mechanicSprite, playerSprite, map){
 
 // next step: create a player which interacts with the grid -> DONE
 // then integrate z axis mvt with player -> DONE
-// improve map generation
+// improve map generation -> DONE 
 
 // make an entity manager to manage all entities
 // make mapManager to manage all maps

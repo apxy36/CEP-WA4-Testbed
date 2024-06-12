@@ -9,7 +9,7 @@ class Tile{
 }
 
 
-class Grid{
+class mapBuilder{
   constructor(w, h, cellSize){ // width and height in tiles, width is to the right, height is to left cuz isometric
     this.grid = new Map();
     // first, we generate the map
