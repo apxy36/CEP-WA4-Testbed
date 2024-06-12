@@ -7,6 +7,7 @@ let GRID_SCALE = 1.0;
 
 let mechplayer;
 let playerZ = 0;
+let prevPlayerZ = 0; 
 
 //next, to change the "x" into numbers, and then to change the numbers into images
 //then to change the images into the isometric view
@@ -40,7 +41,7 @@ function setup() {
   //   tile_images.push(loadImage("./new_tileset/tile_" + i.toString().padStart(3, '0') + ".png"));
   // }
 
-  map = new Grid(80, 80, 32)
+  map = new Grid(70, 70, 32)
   cam = new CameraManager(windowWidth / 2, windowHeight / 2, camera);
   // graphics = createGraphics(windowWidth, windowHeight);
   // map.buildMap();
@@ -51,7 +52,9 @@ function setup() {
   // map.buildIso();
   
   
-  map.setPlayerPosition(1, mechplayer);
+  
+  //set playerZ to z coordinate of the tile
+  playerZ = map.setPlayerPosition(1, mechplayer);//map.getTile(round(map.)).z;
   cam.setTarget(displayPlayer);
 }
 
@@ -98,15 +101,16 @@ function manageVisiblePlayer(mechanicSprite, playerSprite, map){
   tilecoords.y = min(max(0, tilecoords.y), map.numRows - 1)
   let tile = map.getTile(tilecoords.x, tilecoords.y)
   // if tile.z is integer
-  if (abs(tile.z - playerZ) <= 1){
+  if (abs(tile.z - playerZ) <= 2){
     playerZ = tile.z;
-    displayPlayer.layer = (tile.z - 0) * 1000;
+    displayPlayer.layer = (tile.z + 2) * 1000;
   }
   // console.log(tile.z, playerZ, map.getAdjacentTiles(tilecoords.x, tilecoords.y));
-
+  // console.log(tilecoords, tile.z, playerZ)
   // console.log(mechanicSprite)
-  playerSprite.pos.x = mechanicSprite.pos.x;
-  playerSprite.pos.y = mechanicSprite.pos.y - playerZ * map.TILE_HEIGHT/2;
+  playerSprite.pos = createVector(mechanicSprite.pos.x, mechanicSprite.pos.y - playerZ * map.TILE_HEIGHT/2);
+  // playerSprite.pos.x = mechanicSprite.pos.x;
+  // playerSprite.pos.y = mechanicSprite.pos.y - playerZ * map.TILE_HEIGHT/2;
 
 }
 
@@ -131,7 +135,11 @@ function draw() {
   // graphics = newGraphics;
   cam.update();
   manageVisiblePlayer(mechplayer, displayPlayer, map)
-  map.updateCollisionLayers(playerZ);
+  if (playerZ != prevPlayerZ){
+    map.updateCollisionLayers(playerZ);
+    prevPlayerZ = playerZ;
+  }
+  // map.updateCollisionLayers(playerZ);
   // map.displayIso(cam.camera.x, cam.camera.y, cam.true_scale);
   move();
 

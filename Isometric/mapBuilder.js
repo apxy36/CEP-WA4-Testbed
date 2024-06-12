@@ -41,11 +41,12 @@ class Grid{
     this.ystart = this.trueheight / 2 - this.GRID_SIZE * this.TILE_HEIGHT / 2;
 
 
-
+    this.grid = this.generateRandomMap();
     // this.tile_images = tile_images;
     this.gridarray = this.generateMapWithCenterRoom(this.width,this.height,8,10);
+    this.gridarray = this.convertMapToGridArray(this.grid);
     console.log(this.gridarray)
-    this.generateMap();
+    // this.generateMap();
     this.isoarray = this.generateIsometricTileArray();
     // console.log(this.gridarray)
     // for (let i = 0; i < this.width; i++) {
@@ -135,6 +136,193 @@ class Grid{
     //gets sprite object\
     let tileIndex = x * this.numCols + y;
     return this.mapTiles[tileIndex];
+  }
+
+  generateRandomMap(){
+    function initializeGrid(N) {
+      let grid = new Map();
+      for (let x = 0; x < N; x++) {
+        for (let y = 0; y < N; y++) {
+          grid.set(`${x}_${y}`, new Tile(x, y, 0, 'empty'));
+        }
+        // console.log(grid)
+      }
+      return grid;
+    }
+
+    // Improved Cellular Automata for terrain height generation with gentler slopes
+    function generateTerrainHeights(grid, N) {
+      // Initialize grid with a less steep initial height distribution
+      for (let x = 0; x < N; x++) {
+        for (let y = 0; y < N; y++) {
+          grid.get(`${x}_${y}`).z = Math.random() > 0.7 ? 1 : 0; // Fewer initial hills
+        }
+      }
+
+      // Apply cellular automata rules
+      for (let step = 0; step < 5; step++) {
+        let newGrid = new Map(grid);
+        for (let x = 1; x < N - 1; x++) {
+          for (let y = 1; y < N - 1; y++) {
+            let neighbors = [
+              grid.get(`${x-1}_${y}`).z,
+              grid.get(`${x+1}_${y}`).z,
+              grid.get(`${x}_${y-1}`).z,
+              grid.get(`${x}_${y+1}`).z,
+              grid.get(`${x-1}_${y-1}`).z,
+              grid.get(`${x+1}_${y-1}`).z,
+              grid.get(`${x-1}_${y+1}`).z,
+              grid.get(`${x+1}_${y+1}`).z
+            ];
+            let sum = neighbors.reduce((a, b) => a + b, 0);
+            if (sum >= 5) {
+              newGrid.get(`${x}_${y}`).z += 1;
+              newGrid.get(`${x}_${y}`).z = Math.max(Math.min(newGrid.get(`${x}_${y}`).z, 5), 0)
+            } else if (sum <= 2.5) {
+              newGrid.get(`${x}_${y}`).z -= 1;
+              newGrid.get(`${x}_${y}`).z = Math.max(Math.min(newGrid.get(`${x}_${y}`).z, 5), 0)
+            }
+          }
+        }
+        grid = newGrid;
+      }
+
+      // Scale heights to range 0-5 and smooth the terrain
+      for (let x = 0; x < N; x++) {
+        for (let y = 0; y < N; y++) {
+          let avgHeight = (
+            grid.get(`${x}_${y}`).z +
+            (grid.has(`${x-1}_${y}`) ? grid.get(`${x-1}_${y}`).z : 0) +
+            (grid.has(`${x+1}_${y}`) ? grid.get(`${x+1}_${y}`).z : 0) +
+            (grid.has(`${x}_${y-1}`) ? grid.get(`${x}_${y-1}`).z : 0) +
+            (grid.has(`${x}_${y+1}`) ? grid.get(`${x}_${y+1}`).z : 0)
+          ) / 5;
+          grid.get(`${x}_${y}`).z = Math.round(avgHeight);
+        }
+      }
+    }
+
+    // Improved Wave Function Collapse for assigning tile types
+    function assignTileTypes(grid, N) {
+      const types = ['stone', 'grass', 'wall', 'brick', 'wood'];
+      const tileTypeWeights = {
+        'stone': 1,
+        'grass': 2,
+        'wall': 1,
+        'brick': 1,
+        'wood': 1,
+      };
+
+      function getPossibleTypes(tile) {
+        return types.filter(type => tileTypeWeights[type]);
+      }
+
+      function collapseTile(x, y) {
+        let tile = grid.get(`${x}_${y}`);
+        let possibleTypes = getPossibleTypes(tile);
+        if (possibleTypes.length === 0) return;
+        let totalWeight = possibleTypes.reduce((sum, type) => sum + tileTypeWeights[type], 0);
+        let rand = Math.random() * totalWeight;
+        for (let type of possibleTypes) {
+          rand -= tileTypeWeights[type];
+          if (rand <= 0) {
+            tile.type = type;
+            break;
+          }
+        }
+      }
+
+      for (let x = 0; x < N; x++) {
+        for (let y = 0; y < N; y++) {
+          collapseTile(x, y);
+        }
+      }
+    }
+
+    function createBoundaryLayer(grid, N) {
+      for (let x = 0; x < N; x++) {
+        for (let y = 0; y < N; y++) {
+          if (x === 0 || x === N - 1 || y === 0 || y === N - 1) {
+            grid.get(`${x}_${y}`).z = 'B';
+            grid.get(`${x}_${y}`).type = 'boundary';
+          }
+        }
+      }
+    }
+
+    function createBridge(grid, N) {
+      let startX = Math.floor(Math.random() * (N - 4)) + 2;
+      let startY = Math.floor(Math.random() * (N - 4)) + 2;
+      let length = Math.floor(Math.random() * (N / 2)) + 3;
+      let direction = Math.random() > 0.5 ? 'horizontal' : 'vertical';
+
+      for (let i = 0; i < length; i++) {
+        let x = startX;
+        let y = startY;
+
+        if (direction === 'horizontal') {
+          x = (startX + i) % N;
+        } else {
+          y = (startY + i) % N;
+        }
+
+        if (x === 0 || x === N - 1 || y === 0 || y === N - 1) break;
+
+        grid.get(`${x}_${y}`).z = 3; // Flat bridge height
+        grid.get(`${x}_${y}`).type = 'wood';
+      }
+    }
+
+    // Add lakes and forests
+    function addLakesAndForests(grid, N) {
+      let lakeSize = Math.floor(Math.random() * (N / 4)) + 2;
+      let forestSize = Math.floor(Math.random() * (N / 4)) + 2;
+      let lakeX = Math.floor(Math.random() * (N - lakeSize));
+      let lakeY = Math.floor(Math.random() * (N - lakeSize));
+      let forestX = Math.floor(Math.random() * (N - forestSize));
+      let forestY = Math.floor(Math.random() * (N - forestSize));
+
+      // Create a lake
+      for (let x = lakeX; x < lakeX + lakeSize; x++) {
+        for (let y = lakeY; y < lakeY + lakeSize; y++) {
+          grid.get(`${x}_${y}`).type = 'water';
+          grid.get(`${x}_${y}`).z = 0;
+        }
+      }
+
+      // Create a forest
+      for (let x = forestX; x < forestX + forestSize; x++) {
+        for (let y = forestY; y < forestY + forestSize; y++) {
+          grid.get(`${x}_${y}`).type = 'forest';
+        }
+      }
+    }
+
+    function printMap(grid, N) {
+      for (let y = 0; y < N; y++) {
+        let row = '';
+        for (let x = 0; x < N; x++) {
+          let tile = grid.get(`${x}_${y}`);
+          row += `${tile.type[0]}(${tile.z}) `;
+        }
+        console.log(row);
+      }
+    }
+
+    function generateMap(N) {
+      let grid = initializeGrid(N);
+      generateTerrainHeights(grid, N);
+      assignTileTypes(grid, N);
+      
+      createBridge(grid, N);
+      addLakesAndForests(grid, N);
+      createBoundaryLayer(grid, N);
+      // ensureAccessibility(grid, N);
+
+      return grid;
+    }
+    return generateMap(this.GRID_SIZE)
+
   }
 
   generateMap(){
@@ -278,7 +466,7 @@ class Grid{
     let ystart = 0
     for (let i = 0; i < this.numCols; i++) {
       for (let j = 0; j < this.numRows; j++) {
-        this.editIsoTileArray(i, j, this.grid.get(i + "_" + j).type, xstart, ystart);
+        this.editIsoTileArray(i, j, this.grid.get(i + "_" + j).z, xstart, ystart);
       }
     }
     this.isoarray = this.isoarray.map(row => row.join('')); 
@@ -613,9 +801,10 @@ class Grid{
       let z = this.getTile(vect.x, vect.y).z;
       if (z != 0){
         // tile.pos.y -= z * this.TILE_HEIGHT / 2;
-        let newtile = new this.displayLayer0.Sprite();
-        newtile.pos.x = tile.pos.x;
-        newtile.pos.y = tile.pos.y;// + z * this.TILE_HEIGHT / 2; //make an entirely new tile that displays another image but has no collision, at the elevated pos. the original tile is at the original pos
+        // console.log(z, vect.x, vect.y)
+        // let newtile = new this.displayLayer0.Sprite();
+        // newtile.pos = createVector(tile.pos.x, tile.pos.y);
+        // + z * this.TILE_HEIGHT / 2; //make an entirely new tile that displays another image but has no collision, at the elevated pos. the original tile is at the original pos
         
         let displayTile;
         // if (z != 'B'){
@@ -684,7 +873,18 @@ class Grid{
     // console.log(" displayer",this.displayMapTiles)
   }
 
-  updateCollisionLayers(playerZ){ // add layer 5 
+  toggleOverlappingLayers(layernum){
+    if (layernum == 0){
+      this.displayLayer0.overlaps(allSprites);
+      this.displayLayer1.overlaps(null);
+      this.displayLayer2.overlaps(null);
+      this.displayLayer3.overlaps(null);
+      this.displayLayer4.overlaps(null);
+      this.displayLayer5.overlaps(null);
+    }
+  }
+
+  updateCollisionLayers(playerZ){ // reconfig to make it player based? ie playersprite.overlaps(displayLayer0)
     // for (let i = -1; i < 1; i++){
     //   let index = min(max(playerZ + i, 0), this.numLayers - 2);
     //   this.displayLayers[index].overlaps(allSprites);
@@ -694,7 +894,12 @@ class Grid{
 
       this.displayLayer0.overlaps(allSprites);
       this.displayLayer1.overlaps(allSprites);
-      // this.displayLayer2.overlaps(allSprites);
+      // this.displayLayer2.overlaps(null)
+      // this.displayLayer3.overlaps(null)
+      // this.displayLayer4.overlaps(null)
+      // this.displayLayer5.overlaps(null)
+
+      this.displayLayer2.overlaps(allSprites, null);
       // this.displayLayer3.overlaps(allSprites);
       // this.displayLayer4.overlaps(allSprites);
       // this.displayLayer5.overlaps(allSprites);
@@ -702,36 +907,40 @@ class Grid{
       this.displayLayer0.overlaps(allSprites);
       this.displayLayer1.overlaps(allSprites);
       this.displayLayer2.overlaps(allSprites);
+      // this.displayLayer3.overlaps(null)
+      // this.displayLayer4.overlaps(null)
+      // this.displayLayer5.overlaps(null)
       // console.log(this.displayLayer2)
       // this.displayLayer3.overlaps(allSprites);
       // this.displayLayer4.overlaps(allSprites);
       // this.displayLayer5.overlaps(allSprites);
     } else if (playerZ == 2){
       // this.displayLayer0.overlaps(allSprites);
+      // this.displayLayer0.overlaps(null)
       this.displayLayer1.overlaps(allSprites);
       this.displayLayer2.overlaps(allSprites);
       this.displayLayer3.overlaps(allSprites);
-      // this.displayLayer4.overlaps(allSprites);
-      // this.displayLayer5.overlaps(allSprites);
+      // this.displayLayer4.overlaps(null);
+      // this.displayLayer5.overlaps(null);
     } else if (playerZ == 3){
-      // this.displayLayer0.overlaps(allSprites);
-      // this.displayLayer1.overlaps(allSprites);
+      // this.displayLayer0.overlaps(null);
+      // this.displayLayer1.overlaps(null);
       this.displayLayer2.overlaps(allSprites);
       this.displayLayer3.overlaps(allSprites);
       this.displayLayer4.overlaps(allSprites);
-      // this.displayLayer5.overlaps(allSprites);
+      // this.displayLayer5.overlaps(null);
     } else if (playerZ == 4){
-      // this.displayLayer0.overlaps(allSprites);
-      // this.displayLayer1.overlaps(allSprites);
-      this.displayLayer2.overlaps(allSprites);
+      // this.displayLayer0.overlaps(null);
+      // this.displayLayer1.overlaps(null);
+      // this.displayLayer2.overlaps(null);
       this.displayLayer3.overlaps(allSprites);
       this.displayLayer4.overlaps(allSprites);
-      // this.displayLayer5.overlaps(allSprites);
+      this.displayLayer5.overlaps(allSprites);
     } else if (playerZ == 5){
-      // this.displayLayer0.overlaps(allSprites);
-      // this.displayLayer1.overlaps(allSprites);
-      // this.displayLayer2.overlaps(allSprites);
-      // this.displayLayer3.overlaps(allSprites);
+      // this.displayLayer0.overlaps(null);
+      // this.displayLayer1.overlaps(null);
+      // this.displayLayer2.overlaps(null);
+      // this.displayLayer3.overlaps(null);
       this.displayLayer4.overlaps(allSprites);
       this.displayLayer5.overlaps(allSprites);
     
@@ -860,6 +1069,11 @@ class Grid{
     // console.log(player)
     player.pos.x = this.numCols/2 * this.TILE_SIDE_LENGTH;
     player.pos.y = this.numRows/2 * this.TILE_HEIGHT;
+    // finds z coordinate of player
+    let x = round(player.pos.x / this.TILE_SIDE_LENGTH);
+    let y = round(player.pos.y / this.TILE_HEIGHT);
+    return this.grid.get(x + "_" + y).z;
+
   }
 }
 
